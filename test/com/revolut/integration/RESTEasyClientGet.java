@@ -21,8 +21,24 @@ import org.jboss.resteasy.client.ClientResponse;
  * 
  */
 public class RESTEasyClientGet {
+	
+	private static String host = "localhost";
+	private static String port = "8080";
 
 	public static void main(String[] args) throws Exception {
+		
+		if(args!=null && args.length==2) {
+			host = args[0];
+			port = args[1];
+		}
+		
+		StringBuilder aux = new StringBuilder();
+		aux.append("http://");
+		aux.append(host);
+		aux.append(":");
+		aux.append(port);
+		
+		String baseUrl = aux.toString();
 	    
 	    ForkJoinPool pool = ForkJoinPool.commonPool(); //by default it uses Runtime.availableProcessors().
 
@@ -30,17 +46,17 @@ public class RESTEasyClientGet {
 			Callable callable = new Callable() {
 	            public Object call() throws Exception {
 	            	ClientRequest request = null;
-	            	request = new ClientRequest("http://localhost:8080/transfer/frank/to/jack/amount/5000");
+	            	request = new ClientRequest(baseUrl + "/transfer/frank/to/jack/amount/5000");
 	        		manageResponse(request.get(String.class));
-	        		request = new ClientRequest("http://localhost:8080/transfer/jack/to/mark/amount/2000");
+	        		request = new ClientRequest(baseUrl + "/transfer/jack/to/mark/amount/2000");
 	        		manageResponse(request.get(String.class));
-	        		request = new ClientRequest("http://localhost:8080/transfer/ed/to/alice/amount/5000");
+	        		request = new ClientRequest(baseUrl + "/transfer/ed/to/alice/amount/5000");
 	        		manageResponse(request.get(String.class));
-	        		request = new ClientRequest("http://localhost:8080/transfer/emma/to/frank/amount/4200");
+	        		request = new ClientRequest(baseUrl + "/transfer/emma/to/frank/amount/4200");
 	        		manageResponse(request.get(String.class));
-	        		request = new ClientRequest("http://localhost:8080/transfer/ed/to/emma/amount/150");
+	        		request = new ClientRequest(baseUrl + "/transfer/ed/to/emma/amount/150");
 	        		manageResponse(request.get(String.class));
-	        		request = new ClientRequest("http://localhost:8080/transfer/mark/to/jack/amount/350");
+	        		request = new ClientRequest(baseUrl + "/transfer/mark/to/jack/amount/350");
 	        		manageResponse(request.get(String.class));
 	                return null;
 	            }
@@ -54,22 +70,22 @@ public class RESTEasyClientGet {
 	    //check the result
 		String r = null;
 		ClientRequest request = null;
-		request = new ClientRequest("http://localhost:8080/balance/frank");
+		request = new ClientRequest(baseUrl + "/balance/frank");
 		r = manageResponse(request.get(String.class));
 		assert r.compareToIgnoreCase("2000")==0;
-		request = new ClientRequest("http://localhost:8080/balance/jack");
+		request = new ClientRequest(baseUrl + "/balance/jack");
 		r = manageResponse(request.get(String.class));
 		assert r.compareToIgnoreCase("38500")==0;
-		request = new ClientRequest("http://localhost:8080/balance/ed");
+		request = new ClientRequest(baseUrl + "/balance/ed");
 		r = manageResponse(request.get(String.class));
 		assert r.compareToIgnoreCase("8500")==0;
-		request = new ClientRequest("http://localhost:8080/balance/alice");
+		request = new ClientRequest(baseUrl + "/balance/alice");
 		r = manageResponse(request.get(String.class));
 		assert r.compareToIgnoreCase("59000")==0;
-		request = new ClientRequest("http://localhost:8080/balance/emma");
+		request = new ClientRequest(baseUrl + "/balance/emma");
 		r = manageResponse(request.get(String.class));
 		assert r.compareToIgnoreCase("29500")==0;
-		request = new ClientRequest("http://localhost:8080/balance/mark");
+		request = new ClientRequest(baseUrl + "/balance/mark");
 		r = manageResponse(request.get(String.class));
 		assert r.compareToIgnoreCase("31500")==0;
 		System.out.println("service consumed correctly!");
@@ -77,8 +93,10 @@ public class RESTEasyClientGet {
 	
 	public static String manageResponse(ClientResponse<String> response) throws Exception {
 		if (response.getStatus()!=200) {
-			throw new RuntimeException("Failed with HTTP error code : " + response.getStatus());
+			response.releaseConnection();
+			throw new RuntimeException("Failed with HTTP error code : " + response.getStatus());	
 		} else {
+			
 			if(response.getHeaders().size()!=0) {
 				BufferedReader br = new BufferedReader(new InputStreamReader(
 					new ByteArrayInputStream(response.getEntity().getBytes())));
@@ -88,7 +106,7 @@ public class RESTEasyClientGet {
 					return output;
 				}
 			}
-			
+			response.releaseConnection();
 			return null;
 		}
 	}
