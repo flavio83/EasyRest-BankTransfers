@@ -22,7 +22,7 @@ import com.revolut.easyrest.AccsEnum;
  * user's balances have changed.
  * 
  */
-public class RESTEasyClient {
+public class LightIntegrationRESTEasyClient {
 	
 	private static String host = "localhost";
 	private static String port = "8080";
