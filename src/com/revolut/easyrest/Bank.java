@@ -44,15 +44,12 @@ public class Bank {
 		checkCornerCases(sender,receiver,amount);
 		
 		AtomicReference<BigInteger> balanceSender = accounts.get(sender);
-		if(balanceSender==null) {
-			throw new BankException("sender account not present");
-		}
-		balanceSender.updateAndGet(x -> x.subtract(BigInteger.valueOf(amount)));
 		AtomicReference<BigInteger> balanceReceiver = accounts.get(receiver);
-		if(balanceReceiver==null) {
-			throw new BankException("receiver account not present");
-		}
-		balanceReceiver.updateAndGet(x -> x.add(BigInteger.valueOf(amount)));
+		
+		//synchronized(this) { using synchronized keyword we do not need touse atomicreference
+			balanceSender.updateAndGet(x -> x.subtract(BigInteger.valueOf(amount)));
+			balanceReceiver.updateAndGet(x -> x.add(BigInteger.valueOf(amount)));
+		//}
 		
 		/*
 		Integer balanceSender = accounts.get(sender);
