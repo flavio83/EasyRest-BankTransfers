@@ -46,7 +46,7 @@ public class Bank {
 		AtomicReference<BigInteger> balanceSender = accounts.get(sender);
 		AtomicReference<BigInteger> balanceReceiver = accounts.get(receiver);
 		
-		//synchronized(this) { using synchronized keyword we do not need touse atomicreference
+		//synchronized(this) { using the synchronized keyword we do not need touse atomicreference
 			balanceSender.updateAndGet(x -> x.subtract(BigInteger.valueOf(amount)));
 			balanceReceiver.updateAndGet(x -> x.add(BigInteger.valueOf(amount)));
 		//}
