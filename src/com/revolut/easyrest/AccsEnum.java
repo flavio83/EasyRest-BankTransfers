@@ -2,8 +2,6 @@ package com.revolut.easyrest;
 
 import java.security.SecureRandom;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 
 public enum AccsEnum {
@@ -16,8 +14,6 @@ public enum AccsEnum {
 	MARK(15000), 
 	TOM(0); //account used for exception test
 	
-	private static final List<AccsEnum> VALUES = Collections.unmodifiableList(Arrays.asList(values()));
-	private static final int SIZE = VALUES.size();
 	private static final SecureRandom RANDOM = new SecureRandom();
 
 	private int initialBalance = 0;

@@ -1,29 +1,34 @@
 package com.revolut.easyrest;
 
+import java.math.BigInteger;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.IntBinaryOperator;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.revolut.easyrest.exception.BankException;
 
 
 
-//accounts can have negative balance (overdrafts allowed)
 public class Bank {
 	
-	private static final IntBinaryOperator ioSum = (x,y)->x+y;
-	private static final IntBinaryOperator ioSub = (x,y)->x-y;
+	private boolean negativeBalanceAllowed = true;
 	
 	//in memory datastore
-	private Map<AccsEnum,AtomicInteger> accounts = null;
+	private Map<AccsEnum,AtomicReference<BigInteger>> accounts = null;
+	//private Map<AccsEnum,Integer> accounts = null;
 
+	//accounts can have negative balance (overdrafts allowed)
 	public Bank() {
-		accounts = new ConcurrentHashMap<>();
+		accounts = new HashMap<>();
+	}
+	
+	public Bank(boolean negativeBalanceAllowed) {
+		accounts = new HashMap<>();
+		this.negativeBalanceAllowed = negativeBalanceAllowed;
 	}
 	
 	public int getBalance(AccsEnum account) {
-		return accounts.get(account).get();
+		return accounts.get(account).get().intValueExact();
 	}
 	
 	public void addAccount(AccsEnum account) {
@@ -31,20 +36,45 @@ public class Bank {
 	}
 	
 	public void addAccount(AccsEnum account, Integer initTransfer) {
-		accounts.put(account,new AtomicInteger(initTransfer));
+		accounts.put(account, new AtomicReference(new BigInteger(String.valueOf(initTransfer))));
 	}
 	
 	public void transfer(AccsEnum sender, AccsEnum receiver, Integer amount) throws BankException {
-		AtomicInteger balanceSender = accounts.get(sender);
+		
+		checkCornerCases(sender,receiver,amount);
+		
+		AtomicReference<BigInteger> balanceSender = accounts.get(sender);
 		if(balanceSender==null) {
 			throw new BankException("sender account not present");
 		}
-		balanceSender.accumulateAndGet(amount, ioSub);
-		AtomicInteger balanceReceiver = accounts.get(receiver);
+		balanceSender.updateAndGet(x -> x.subtract(BigInteger.valueOf(amount)));
+		AtomicReference<BigInteger> balanceReceiver = accounts.get(receiver);
 		if(balanceReceiver==null) {
 			throw new BankException("receiver account not present");
 		}
-		balanceReceiver.accumulateAndGet(amount, ioSum);
+		balanceReceiver.updateAndGet(x -> x.add(BigInteger.valueOf(amount)));
+		
+		/*
+		Integer balanceSender = accounts.get(sender);
+		accounts.put(sender, balanceSender.intValue()-amount.intValue());
+		
+		Integer balanceReceiver = accounts.get(receiver);
+		accounts.put(receiver, balanceReceiver.intValue()-amount.intValue());
+		*/
+	}
+	
+	private void checkCornerCases(AccsEnum sender, AccsEnum receiver, Integer amount) throws BankException {
+		if(!accounts.containsKey(sender) && !accounts.containsKey(receiver)) {
+			throw new BankException("sender and receiver accounts not present");
+		} else if(!accounts.containsKey(sender)) {
+			throw new BankException("sender account not present");
+		} else if(!accounts.containsKey(receiver)) {
+			throw new BankException("receiver account not present");
+		} else if(!negativeBalanceAllowed && Integer.signum(amount)<=0) {
+			throw new BankException("you can't transfer a negative/equals to zero amount");
+		} else if(sender.equals(receiver)) {
+			throw new BankException("you can't transfer money to the same account");
+		}
 	}
 
 }
