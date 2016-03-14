@@ -1,7 +1,5 @@
 package com.revolut.unit;
 
-import java.util.concurrent.Callable;
-
 import org.testng.Assert;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -10,7 +8,6 @@ import org.testng.annotations.Test;
 import com.revolut.easyrest.AccsEnum;
 import com.revolut.easyrest.Bank;
 import com.revolut.easyrest.exception.BankException;
-import com.revolut.integration.Transaction;
 
 
 
@@ -40,8 +37,13 @@ public class LightTestBankClass {
 	}
 	
 	@Test(expectedExceptions = BankException.class)
-	public void checkException() throws Exception {
+	public void checkExceptionNotExistingAccount() throws Exception {
 		bank.transfer(AccsEnum.TOM, AccsEnum.ALICE, 5000);
+	}
+	
+	@Test(expectedExceptions = BankException.class)
+	public void checkExceptionTransferBetweenSameAccount() throws Exception {
+		bank.transfer(AccsEnum.ALICE, AccsEnum.ALICE, 5000);
 	}
 	
 	@AfterTest
